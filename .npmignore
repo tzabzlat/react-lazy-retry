@@ -1,0 +1,9 @@
+.idea/
+.vscode/
+.git/
+src/
+*.ts
+*.tsx
+!*.d.ts
+rollup.config.js
+tsconfig.json

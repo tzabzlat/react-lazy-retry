@@ -1,0 +1,68 @@
+{
+  "name": "@tzabzlat/react-lazy-retry",
+  "version": "1.0.0",
+  "description": "Simple React component lazy loading with automatic retry logic and loading error handling.",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/types/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "keywords": [
+    "react",
+    "lazy",
+    "loading",
+    "suspense",
+    "error-boundary",
+    "retry",
+    "typescript"
+  ],
+  "author": "tzabzlat <tzabzlat@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tzabzlat/react-lazy-retry.git"
+  },
+  "homepage": "https://github.com/tzabzlat/react-lazy-retry#readme",
+  "bugs": {
+    "url": "https://github.com/tzabzlat/react-lazy-retry/issues"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "dependencies": {
+    "react-error-boundary": "^4.0.11"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^10.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-react": "^7.0.0",
+    "eslint-plugin-react-hooks": "^4.0.0",
+    "rollup": "^3.29.5",
+    "rollup-plugin-dts": "^6.2.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
+  }
+}
