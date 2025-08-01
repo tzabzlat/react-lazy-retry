@@ -1,38 +1,31 @@
-import React, {
-  ComponentType,
-  ReactNode,
-  Suspense,
-  useEffect,
-  useRef,
-  ErrorInfo,
-} from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { RetryComponentProps } from "./RetryComponentProps";
-import { DefaultErrorComponent } from "./DefaultErrorComponent";
-import { DefaultLoadingAnimation } from "./DefaultLoadingAnimation";
+import React, {ComponentType, ReactNode, Suspense, useEffect, useRef, ErrorInfo} from 'react';
+import {ErrorBoundary} from 'react-error-boundary';
+import {RetryComponentProps} from "./RetryComponentProps";
+import {DefaultErrorComponent} from "./DefaultErrorComponent";
+import {DefaultLoadingAnimation} from "./DefaultLoadingAnimation";
 
 // Props for LazyLoad
 export interface LazyLoadProps<T extends object> {
-  // Component import function
-  importFn: () => Promise<any>;
+    // Component import function
+    importFn: () => Promise<any>;
 
-  // Props to pass to the loaded component
-  componentProps?: T;
+    // Props to pass to the loaded component
+    componentProps?: T
 
-  // Loading options
-  retries?: number;
-  retryDelay?: number;
+    // Loading options
+    retries?: number;
+    retryDelay?: number;
 
-  // UI components
-  loadingComponent?: ComponentType;
-  errorComponent?: ComponentType<RetryComponentProps>;
+    // UI components
+    loadingComponent?: ComponentType;
+    errorComponent?: ComponentType<RetryComponentProps>;
 
-  // Callbacks
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
-  onRetry?: () => void;
+    // Callbacks
+    onError?: (error: Error, errorInfo: ErrorInfo) => void;
+    onRetry?: () => void;
 
-  // Enable/disable verbose logging
-  verbose?: boolean;
+    // Enable/disable verbose logging
+    verbose?: boolean;
 }
 
 /**
@@ -55,235 +48,211 @@ export const LazyLoad = <T extends object>({
   onRetry,
   verbose = false,
 }: LazyLoadProps<T>) => {
-  // Logger function that respects verbose flag
-  const log = React.useCallback(
-    (level: "info" | "error", ...args: any[]) => {
-      if (!verbose) return;
+    // Logger function that respects verbose flag
+    const log = React.useCallback((level: 'info' | 'error', ...args: any[]) => {
+        if (!verbose) return;
 
-      const prefix = "[LazyLoad]";
+        const prefix = '[LazyLoad]';
 
-      if (level === "info") {
-        console.log(prefix, ...args);
-      } else {
-        console.error(prefix, ...args);
-      }
-    },
-    [verbose]
-  );
-
-  const [mountKey, setMountKey] = React.useState(0);
-  const [retryKey, setRetryKey] = React.useState(0);
-  const timersRef = useRef<Set<number>>(new Set());
-  const isMountedRef = useRef(true);
-
-  const createSafeTimeout = React.useCallback(
-    (callback: () => void, delay: number) => {
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      const timerId = window.setTimeout(() => {
-        timersRef.current.delete(timerId);
-
-        if (isMountedRef.current) {
-          callback();
+        if (level === 'info') {
+            console.log(prefix, ...args);
+        } else {
+            console.error(prefix, ...args);
         }
-      }, delay);
+    }, [verbose]);
 
-      timersRef.current.add(timerId);
-      return timerId;
-    },
-    []
-  );
+    const [mountKey, setMountKey] = React.useState(0);
+    const [retryKey, setRetryKey] = React.useState(0);
+    const timersRef = useRef<Set<number>>(new Set());
+    const isMountedRef = useRef(true);
 
-  const clearAllTimers = React.useCallback(() => {
-    timersRef.current.forEach((timerId) => {
-      clearTimeout(timerId);
-    });
-    timersRef.current.clear();
-  }, []);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    return () => {
-      isMountedRef.current = false;
-      clearAllTimers();
-      log("info", "Component unmounted, all timers cleared");
-    };
-  }, [clearAllTimers, log]);
-
-  // Create lazy component with automatic retry logic
-  const LazyComponent = React.useMemo(() => {
-    log(
-      "info",
-      `Creating new lazy component instance with retryKey: ${retryKey}`
-    );
-
-    return React.lazy(() => {
-      return new Promise<any>((resolve, reject) => {
-        let attempts = 0;
-        let currentAttemptCancelled = false;
-
-        const tryImport = () => {
-          if (currentAttemptCancelled || !isMountedRef.current) {
-            reject(new Error("Import cancelled due to component unmount"));
+    const createSafeTimeout = React.useCallback((callback: () => void, delay: number) => {
+        if (!isMountedRef.current) {
             return;
-          }
+        }
 
-          importFn()
-            .then((module) => {
-              if (!currentAttemptCancelled && isMountedRef.current) {
-                resolve(module);
-              }
-            })
-            .catch((error) => {
-              if (currentAttemptCancelled || !isMountedRef.current) {
-                reject(new Error("Import cancelled due to component unmount"));
-                return;
-              }
+        const timerId = window.setTimeout(() => {
+            timersRef.current.delete(timerId);
 
-              attempts++;
-              log(
-                "info",
-                `Import attempt ${attempts}/${retries} failed:`,
-                error.message
-              );
+            if (isMountedRef.current) {
+                callback();
+            }
+        }, delay);
 
-              if (attempts >= retries) {
-                reject(error);
-              } else {
-                const delay = retryDelay * attempts;
-                log("info", `Retrying in ${delay}ms...`);
+        timersRef.current.add(timerId);
+        return timerId;
+    }, []);
 
-                createSafeTimeout(tryImport, delay);
-              }
-            });
-        };
+    const clearAllTimers = React.useCallback(() => {
+        timersRef.current.forEach(timerId => {
+            clearTimeout(timerId);
+        });
+        timersRef.current.clear();
+    }, []);
 
-        tryImport();
+    useEffect(() => {
+        isMountedRef.current = true;
 
         return () => {
-          currentAttemptCancelled = true;
+            isMountedRef.current = false;
+            clearAllTimers();
+            log('info', 'Component unmounted, all timers cleared');
         };
-      });
-    });
-  }, [importFn, retries, retryDelay, retryKey, log, createSafeTimeout]);
+    }, [clearAllTimers, log]);
 
-  React.useEffect(() => {
-    return () => {
-      clearAllTimers();
-    };
-  }, [retryKey, clearAllTimers]);
+    // Create lazy component with automatic retry logic
+    const LazyComponent = React.useMemo(() => {
+        log('info', `Creating new lazy component instance with retryKey: ${retryKey}`);
 
-  // Error handler for logging
-  const handleError = React.useCallback(
-    (error: Error, errorInfo: ErrorInfo) => {
-      log("error", "LazyLoad Error:", error);
-      log("error", "Component Stack:", errorInfo.componentStack);
+        return React.lazy(() => {
+            return new Promise<any>((resolve, reject) => {
+                let attempts = 0;
+                let currentAttemptCancelled = false;
 
-      // Call user-provided error handler
-      onError?.(error, errorInfo);
-    },
-    [log, onError]
-  );
+                const tryImport = () => {
+                    if (currentAttemptCancelled || !isMountedRef.current) {
+                        reject(new Error('Import cancelled due to component unmount'));
+                        return;
+                    }
 
-  // Function to retry lazy component
-  const retryLazyComponent = React.useCallback(() => {
-    log("info", "Forcing lazy component recreation...");
-    clearAllTimers();
-    setRetryKey((prev) => prev + 1);
-  }, [log, clearAllTimers]);
+                    importFn()
+                        .then((module) => {
+                            if (!currentAttemptCancelled && isMountedRef.current) {
+                                resolve(module);
+                            }
+                        })
+                        .catch((error) => {
+                            if (currentAttemptCancelled || !isMountedRef.current) {
+                                reject(new Error('Import cancelled due to component unmount'));
+                                return;
+                            }
 
-  // Reset error handler
-  const handleReset = React.useCallback(() => {
-    log("info", "Retrying component loading...");
+                            attempts++;
+                            log('info', `Import attempt ${attempts}/${retries} failed:`, error.message);
 
-    // 1. First recreate the lazy component
-    retryLazyComponent();
+                            if (attempts >= retries) {
+                                reject(error);
+                            } else {
+                                const delay = retryDelay * attempts;
+                                log('info', `Retrying in ${delay}ms...`);
 
-    // 2. Increment key to force remount children
-    setMountKey((prev) => {
-      const newKey = prev + 1;
-      log("info", `Remounting component with key: ${newKey}`);
-      return newKey;
-    });
+                                createSafeTimeout(tryImport, delay);
+                            }
+                        });
+                };
 
-    // 3. Notify parent component (if additional logic needed)
-    onRetry?.();
-  }, [log, retryLazyComponent, onRetry]);
+                tryImport();
 
-  // Error fallback component
-  const ErrorFallback = React.useCallback(
-    (props: {
-      error: Error;
-      resetErrorBoundary: () => void;
+                return () => {
+                    currentAttemptCancelled = true;
+                };
+            });
+        });
+    }, [importFn, retries, retryDelay, retryKey, log, createSafeTimeout]);
+
+    React.useEffect(() => {
+        return () => {
+            clearAllTimers();
+        };
+    }, [retryKey, clearAllTimers]);
+
+    // Error handler for logging
+    const handleError = React.useCallback((error: Error, errorInfo: ErrorInfo) => {
+        log('error', 'LazyLoad Error:', error);
+        log('error', 'Component Stack:', errorInfo.componentStack);
+
+        // Call user-provided error handler
+        onError?.(error, errorInfo);
+    }, [log, onError]);
+
+    // Function to retry lazy component
+    const retryLazyComponent = React.useCallback(() => {
+        log('info', 'Forcing lazy component recreation...');
+        clearAllTimers();
+        setRetryKey(prev => prev + 1);
+    }, [log, clearAllTimers]);
+
+    // Reset error handler
+    const handleReset = React.useCallback(() => {
+        log('info', 'Retrying component loading...');
+
+        // 1. First recreate the lazy component
+        retryLazyComponent();
+
+        // 2. Increment key to force remount children
+        setMountKey(prev => {
+            const newKey = prev + 1;
+            log('info', `Remounting component with key: ${newKey}`);
+            return newKey;
+        });
+
+        // 3. Notify parent component (if additional logic needed)
+        onRetry?.();
+    }, [log, retryLazyComponent, onRetry]);
+
+    // Error fallback component
+    const ErrorFallback = React.useCallback((props: {
+        error: Error;
+        resetErrorBoundary: () => void;
     }): React.JSX.Element => {
-      const { error, resetErrorBoundary } = props;
+        const { error, resetErrorBoundary } = props;
 
-      const handleRetry = () => {
-        handleReset();
-        resetErrorBoundary();
-      };
+        const handleRetry = () => {
+            handleReset();
+            resetErrorBoundary();
+        };
 
-      // Use custom error component if provided
-      if (errorComponent) {
-        if (React.isValidElement(errorComponent)) {
-          return React.cloneElement(errorComponent as React.ReactElement, {
-            error,
-            resetErrorBoundary: handleRetry,
-          });
+        // Use custom error component if provided
+        if (errorComponent) {
+            if (React.isValidElement(errorComponent)) {
+                return React.cloneElement(errorComponent as React.ReactElement, {
+                    error,
+                    resetErrorBoundary: handleRetry
+                });
+            }
+
+            if (typeof errorComponent === 'function') {
+                const ErrorComponent = errorComponent as ComponentType<RetryComponentProps>;
+                return <ErrorComponent error={error} resetErrorBoundary={handleRetry}/>;
+            }
+
+            return errorComponent as React.JSX.Element;
         }
 
-        if (typeof errorComponent === "function") {
-          const ErrorComponent =
-            errorComponent as ComponentType<RetryComponentProps>;
-          return (
-            <ErrorComponent error={error} resetErrorBoundary={handleRetry} />
-          );
+        // Use default error component
+        return <DefaultErrorComponent error={error} resetErrorBoundary={handleRetry}/>;
+    }, [handleReset, errorComponent]);
+
+    // Render loading component
+    const renderLoadingComponent = (): NonNullable<ReactNode> => {
+        if (!loadingComponent) {
+            return <DefaultLoadingAnimation/>;
         }
 
-        return errorComponent as React.JSX.Element;
-      }
+        if (React.isValidElement(loadingComponent)) {
+            return loadingComponent;
+        }
 
-      // Use default error component
-      return (
-        <DefaultErrorComponent error={error} resetErrorBoundary={handleRetry} />
-      );
-    },
-    [handleReset, errorComponent]
-  );
+        if (typeof loadingComponent === 'function') {
+            const LoadingComponent = loadingComponent as ComponentType;
+            return <LoadingComponent/>;
+        }
 
-  // Render loading component
-  const renderLoadingComponent = (): NonNullable<ReactNode> => {
-    if (!loadingComponent) {
-      return <DefaultLoadingAnimation />;
-    }
+        return loadingComponent as NonNullable<ReactNode>;
+    };
 
-    if (React.isValidElement(loadingComponent)) {
-      return loadingComponent;
-    }
-
-    if (typeof loadingComponent === "function") {
-      const LoadingComponent = loadingComponent as ComponentType;
-      return <LoadingComponent />;
-    }
-
-    return loadingComponent as NonNullable<ReactNode>;
-  };
-
-  return (
-    <ErrorBoundary
-      fallbackRender={ErrorFallback}
-      onError={handleError}
-      onReset={handleReset}
-      resetKeys={[mountKey, retryKey]}
-    >
-      <Suspense fallback={renderLoadingComponent()}>
-        <React.Fragment key={mountKey}>
-          <LazyComponent {...componentProps} />
-        </React.Fragment>
-      </Suspense>
-    </ErrorBoundary>
-  );
+    return (
+        <ErrorBoundary
+            fallbackRender={ErrorFallback}
+            onError={handleError}
+            onReset={handleReset}
+            resetKeys={[mountKey, retryKey]}
+        >
+            <Suspense fallback={renderLoadingComponent()}>
+                <React.Fragment key={mountKey}>
+                    <LazyComponent {...componentProps} />
+                </React.Fragment>
+            </Suspense>
+        </ErrorBoundary>
+    );
 };
