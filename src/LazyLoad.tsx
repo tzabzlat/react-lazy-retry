@@ -5,12 +5,12 @@ import {DefaultErrorComponent} from "./DefaultErrorComponent";
 import {DefaultLoadingAnimation} from "./DefaultLoadingAnimation";
 
 // Props for LazyLoad
-export interface LazyLoadProps {
+export interface LazyLoadProps<T extends object> {
     // Component import function
     importFn: () => Promise<any>;
 
     // Props to pass to the loaded component
-    componentProps?: Record<string, any>;
+    componentProps?: T
 
     // Loading options
     retries?: number;
@@ -37,19 +37,17 @@ export interface LazyLoadProps {
  *   verbose={true}
  * />
  */
-export const LazyLoad: React.FC<LazyLoadProps> = (
-    {
-        importFn,
-        componentProps,
-        retries = 3,
-        retryDelay = 1000,
-        loadingComponent,
-        errorComponent,
-        onError,
-        onRetry,
-        verbose = false,
-    }
-) => {
+export const LazyLoad = <T extends object>({
+  importFn,
+  componentProps,
+  retries = 3,
+  retryDelay = 1000,
+  loadingComponent,
+  errorComponent,
+  onError,
+  onRetry,
+  verbose = false,
+}: LazyLoadProps<T>) => {
     // Logger function that respects verbose flag
     const log = React.useCallback((level: 'info' | 'error', ...args: any[]) => {
         if (!verbose) return;
