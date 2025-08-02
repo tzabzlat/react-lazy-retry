@@ -48,7 +48,22 @@ import { LazyLoad } from '@tzabzlat/react-lazy-retry';
 ### With Component Props
 
 ```typescript
+// Without typing
 <LazyLoad
+  importFn={() => import('./UserProfile')}
+  componentProps={{
+    userId: 123,
+    theme: 'dark'
+  }}
+/>
+
+// With typing
+interface UserProfileProps {
+  userId: number;
+  theme: 'light' | 'dark';
+}
+
+<LazyLoad<UserProfileProps>
   importFn={() => import('./UserProfile')}
   componentProps={{
     userId: 123,
@@ -60,8 +75,17 @@ import { LazyLoad } from '@tzabzlat/react-lazy-retry';
 ### Advanced Configuration
 
 ```typescript
-<LazyLoad
+interface AnalyticsChartProps {
+  dataSource: string;
+  refreshInterval?: number;
+}
+
+<LazyLoad<AnalyticsChartProps>
   importFn={() => import('./AnalyticsChart')}
+  componentProps={{
+    dataSource: 'api/analytics',
+    refreshInterval: 5000
+  }}
   retries={5}
   retryDelay={2000}
   verbose={true}
@@ -116,12 +140,12 @@ const CustomError: React.FC<RetryComponentProps> = ({ error, resetErrorBoundary 
 
 ## API
 
-### LazyLoadProps
+### LazyLoadProps<T>
 
 | Parameter          | Type                                           | Default                   | Description                                |
 |--------------------|------------------------------------------------|---------------------------|--------------------------------------------|
 | `importFn`         | `() => Promise<any>`                           | **required**              | Component import function                  |
-| `componentProps`   | `Record<string, any>`                          | `undefined`               | Props to pass to the loaded component      |
+| `componentProps`   | `T`                                            | `undefined`               | Props to pass to the loaded component      |
 | `retries`          | `number`                                       | `3`                       | Number of retry attempts                   |
 | `retryDelay`       | `number`                                       | `1000`                    | Delay between attempts (ms)                |
 | `loadingComponent` | `ComponentType`                                | `DefaultLoadingAnimation` | Component to display loading state         |
@@ -145,6 +169,8 @@ interface RetryComponentProps {
 - TypeScript 4.0+
 
 ## Contributing
+
+Thanks to [@Gorefistus](https://github.com/Gorefistus) for adding generic type support!
 
 If you found a bug or have suggestions for improvement, feel free to:
 

@@ -48,7 +48,22 @@ import { LazyLoad } from '@tzabzlat/react-lazy-retry';
 ### С передачей props в компонент
 
 ```typescript
+// Без типизации
 <LazyLoad
+  importFn={() => import('./UserProfile')}
+  componentProps={{
+    userId: 123,
+    theme: 'dark'
+  }}
+/>
+
+// С типизацией
+interface UserProfileProps {
+  userId: number;
+  theme: 'light' | 'dark';
+}
+
+<LazyLoad<UserProfileProps>
   importFn={() => import('./UserProfile')}
   componentProps={{
     userId: 123,
@@ -60,8 +75,17 @@ import { LazyLoad } from '@tzabzlat/react-lazy-retry';
 ### Расширенная конфигурация
 
 ```typescript
-<LazyLoad
+interface AnalyticsChartProps {
+  dataSource: string;
+  refreshInterval?: number;
+}
+
+<LazyLoad<AnalyticsChartProps>
   importFn={() => import('./AnalyticsChart')}
+  componentProps={{
+    dataSource: 'api/analytics',
+    refreshInterval: 5000
+  }}
   retries={5}
   retryDelay={2000}
   verbose={true}
@@ -106,7 +130,6 @@ const CustomError: React.FC<RetryComponentProps> = ({ error, resetErrorBoundary 
   </div>
 );
 
-// Использование
 <LazyLoad
   importFn={() => import('./MyComponent')}
   loadingComponent={CustomLoad}
@@ -116,12 +139,12 @@ const CustomError: React.FC<RetryComponentProps> = ({ error, resetErrorBoundary 
 
 ## API
 
-### LazyLoadProps
+### LazyLoadProps<T>
 
 | Параметр           | Тип                                            | По умолчанию              | Описание                                   |
 |--------------------|------------------------------------------------|---------------------------|--------------------------------------------|
 | `importFn`         | `() => Promise<any>`                           | **обязательный**          | Функция импорта компонента                 |
-| `componentProps`   | `Record<string, any>`                          | `undefined`               | Props для передачи в загруженный компонент |
+| `componentProps`   | `T`                                            | `undefined`               | Props для передачи в загруженный компонент |
 | `retries`          | `number`                                       | `3`                       | Количество повторных попыток               |
 | `retryDelay`       | `number`                                       | `1000`                    | Задержка между попытками (мс)              |
 | `loadingComponent` | `ComponentType`                                | `DefaultLoadingAnimation` | Компонент отображения состояния загрузки   |
@@ -144,7 +167,10 @@ interface RetryComponentProps {
 - React 16.8+
 - TypeScript 4.0+
 
-### Вклад в проект
+## Вклад в проект
+
+Спасибо [@Gorefistus](https://github.com/Gorefistus) за добавление поддержки типизации componentProps!
+
 Если вы нашли ошибку или у вас есть предложения по улучшению, не стесняйтесь:
 
 - Создавать issue с описанием проблемы или предложения
