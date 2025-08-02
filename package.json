@@ -1,6 +1,6 @@
 {
   "name": "@tzabzlat/react-lazy-retry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Simple React component lazy loading with automatic retry logic and loading error handling.",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
